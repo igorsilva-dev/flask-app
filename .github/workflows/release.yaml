@@ -35,7 +35,7 @@ jobs:
           echo "Detected next version: $VERSION"
           echo "version=$VERSION" >> $GITHUB_OUTPUT
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GH_FLASK_APP }}
 
       - name: Build and tag Docker image
         run: |
@@ -49,4 +49,4 @@ jobs:
       - name: Run semantic-release
         run: semantic-release
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GH_FLASK_APP }}
