@@ -33,9 +33,10 @@ jobs:
       - name: Extract next version (dry-run)
         id: version
         run: |
-          OUTPUT=$(semantic-release --dry-run 2>&1)
-          echo $OUTPUT
-          VERSION=$(semantic-release --dry-run | grep -oP 'Release version \K[0-9]+\.[0-9]+\.[0-9]+')
+          set +e  # Don't exit script on command error
+          OUTPUT=$(semantic-release --dry-run)
+          echo "$OUTPUT"
+          VERSION=$(echo "$OUTPUT" | grep -oP 'Release version \K[0-9]+\.[0-9]+\.[0-9]+' || echo "")
           echo "Detected next version: $VERSION"
           echo "version=$VERSION" >> $GITHUB_OUTPUT
         env:
