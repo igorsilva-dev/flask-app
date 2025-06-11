@@ -36,7 +36,7 @@ jobs:
           set +e  # Don't exit script on command error
           OUTPUT=$(semantic-release --dry-run)
           echo "$OUTPUT"
-          VERSION=$(echo "$OUTPUT" | grep -oP 'Release version \K[0-9]+\.[0-9]+\.[0-9]+' || echo "")
+          VERSION=$(echo "$OUTPUT" | grep -oP 'The next release version is \K[0-9]+\.[0-9]+\.[0-9]+' || echo "")
           echo "Detected next version: $VERSION"
           echo "version=$VERSION" >> $GITHUB_OUTPUT
         env:
