@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.1](https://github.com/igorsilva-dev/flask-app/compare/v0.1.0...v0.1.1) (2025-06-11)
+
+
+### Bug Fixes
+
+* docker build ([92708bd](https://github.com/igorsilva-dev/flask-app/commit/92708bd2cf640894bd4337f4d3caf151e7338ca9))
+* docker build ([1039fbe](https://github.com/igorsilva-dev/flask-app/commit/1039fbe3eb4cee98ab823e0532ca1a3fd1eb5fa5))
+
 # [0.1.0](https://github.com/igorsilva-dev/flask-app/compare/v0.0.1...v0.1.0) (2025-06-11)
 
 
