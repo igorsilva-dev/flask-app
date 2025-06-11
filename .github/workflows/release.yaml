@@ -47,12 +47,12 @@ jobs:
           VERSION="${{ steps.version.outputs.version }}"
           echo "Building image with version: $VERSION"
           docker build -t ${{ secrets.DOCKER_USERNAME }}/flask-app:latest \
-                      -t ${{ secrets.DOCKER_USERNAME }}/flask-app:${{ steps.version.outputs.version }} .
+                      -t ${{ secrets.DOCKER_USERNAME }}/flask-app:v${{ steps.version.outputs.version }} .
 
       - name: Push Docker images
         run: |
           docker push ${{ secrets.DOCKER_USERNAME }}/flask-app:latest
-          docker push ${{ secrets.DOCKER_USERNAME }}/flask-app:${{ steps.version.outputs.version }}
+          docker push ${{ secrets.DOCKER_USERNAME }}/flask-app:v${{ steps.version.outputs.version }}
 
       - name: Run semantic-release
         run: semantic-release
