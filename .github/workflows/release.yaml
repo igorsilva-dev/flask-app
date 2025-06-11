@@ -38,7 +38,7 @@ jobs:
           echo "$OUTPUT"
           VERSION=$(echo "$OUTPUT" | grep -oP 'The next release version is \K[0-9]+\.[0-9]+\.[0-9]+' || echo "")
           echo "Detected next version: $VERSION"
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "version=v$VERSION" >> $GITHUB_OUTPUT
         env:
           GITHUB_TOKEN: ${{ secrets.GH_FLASK_APP }}
 
@@ -47,15 +47,15 @@ jobs:
           VERSION="${{ steps.version.outputs.version }}"
           echo "Building image with version: $VERSION"
           docker build -t ${{ secrets.DOCKER_USERNAME }}/flask-app:latest \
-                      -t ${{ secrets.DOCKER_USERNAME }}/flask-app:v${{ steps.version.outputs.version }} .
+                      -t ${{ secrets.DOCKER_USERNAME }}/flask-app:${{ steps.version.outputs.version }} .
 
       - name: Push Docker images
         run: |
           docker push ${{ secrets.DOCKER_USERNAME }}/flask-app:latest
-          docker push ${{ secrets.DOCKER_USERNAME }}/flask-app:v${{ steps.version.outputs.version }}
+          docker push ${{ secrets.DOCKER_USERNAME }}/flask-app:${{ steps.version.outputs.version }}
 
       - name: Run semantic-release
         run: semantic-release
         env:
           GITHUB_TOKEN: ${{ secrets.GH_FLASK_APP }}
-          
+
