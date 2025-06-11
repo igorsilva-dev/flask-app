@@ -44,12 +44,15 @@ jobs:
 
       - name: Build and tag Docker image
         run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/flask-app:latest -t ${{ secrets.DOCKER_USERNAME }}/flask-app:${{ steps.version.outputs.version }} .
+          VERSION="${{ steps.version.outputs.version }}"
+          echo "Building image with version: $VERSION"
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/flask-app:latest \
+                      -t ${{ secrets.DOCKER_USERNAME }}/flask-app:$VERSION .
 
       - name: Push Docker images
         run: |
           docker push ${{ secrets.DOCKER_USERNAME }}/flask-app:latest
-          docker push ${{ secrets.DOCKER_USERNAME }}/flask-app:${{ steps.version.outputs.version }}
+          docker push ${{ secrets.DOCKER_USERNAME }}/flask-app:$VERSION
 
       - name: Run semantic-release
         run: semantic-release
