@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+# [0.2.0](https://github.com/igorsilva-dev/flask-app/compare/v0.1.1...v0.2.0) (2025-06-11)
+
+
+### Features
+
+* change workflow for version ([93d3262](https://github.com/igorsilva-dev/flask-app/commit/93d3262217c26f4fdc7ddc5e875fa92e1ae4c68b))
+
 ## [0.1.1](https://github.com/igorsilva-dev/flask-app/compare/v0.1.0...v0.1.1) (2025-06-11)
 
 
