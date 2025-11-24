@@ -10,6 +10,7 @@ on:
 
 jobs:
   call-external:
-    uses: igorsilva-dev/helm-charts/.github/workflows/release-trigger.yaml@main
+    uses: igorsilva-dev/helm-charts/.github/workflows/release-app.yaml@main
     with:
+      application: flask-app
       version: ${{ github.event.inputs.version }}
