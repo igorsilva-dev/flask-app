@@ -14,3 +14,5 @@ jobs:
     with:
       application: flask-app
       version: ${{ github.event.inputs.version }}
+    secrets:
+      GH_PAT: ${{ secrets.GH_HELM }}
