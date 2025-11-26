@@ -1,6 +1,0 @@
-dependencies:
-- name: app-generic
-  repository: https://igorsilva-dev.github.io/helm-charts
-  version: 0.1.0
-digest: sha256:aa24743a4612be4dfeebb0b6c994be9644bf0b017fd78617112e26cbd6eb0408
-generated: "2025-11-26T07:45:52.424857+01:00"
