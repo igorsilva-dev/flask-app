@@ -1,0 +1,48 @@
+name: Release Chart
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to pass to helm-charts workflow"
+        required: true
+        default: "0.2.0"
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          token: ${{ secrets.GH_FLASK_APP }}
+          fetch-depth: 0
+      
+      - name: Install Helm
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+
+      - name: Install Chart Releaser
+        run: |
+          curl -sSL https://github.com/helm/chart-releaser/releases/download/v1.6.0/chart-releaser_1.6.0_linux_amd64.tar.gz \
+            | tar -xz -C /usr/local/bin cr
+
+      - name: Package & Publish Helm charts
+        run: |
+          cr package charts/flask-app
+          cr upload \
+            --owner igorsilva-dev \
+            --repo helm-charts \
+            --release-name-template "{{ .Name }}-{{ github.event.inputs.version }}" \
+            --token ${{ secrets.GH_FLASK_APP }}
+          
+          cr index \
+            --owner igorsilva-dev \
+            --repo helm-charts \
+            --charts-repo https://igorsilva-dev.github.io/helm-charts \
+            --token ${{ secrets.GH_FLASK_APP }}
+
+        env:
+          CR_TOKEN: ${{ secrets.GH_FLASK_APP }}
+
