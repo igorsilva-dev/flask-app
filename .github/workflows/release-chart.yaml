@@ -36,6 +36,13 @@ jobs:
           curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
 
       # ---------------------------
+      #  Update Helm dependencies
+      # ---------------------------
+      - name: Update Helm dependencies
+        run: |
+          helm dependency update charts/flask-app
+      
+      # ---------------------------
       #  Set chart version + appVersion dynamically
       # ---------------------------
       - name: Package Helm chart with version overrides
