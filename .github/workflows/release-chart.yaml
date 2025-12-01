@@ -4,45 +4,73 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "Version to pass to helm-charts workflow"
+        description: "Chart & app version (e.g. 1.2.3)"
         required: true
-        default: "0.2.0"
 
 jobs:
   release:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
+      # ---------------------------
+      #  Authenticate as GitHub App
+      # ---------------------------
+      - name: Generate GitHub App Token
+        id: app-token
+        uses: tibdex/github-app-token@v2
         with:
-          token: ${{ secrets.GH_FLASK_APP }}
-          fetch-depth: 0
-      
+          app_id: ${{ secrets.GH_APP_ID }}
+          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          installation_id: ${{ secrets.GH_APP_INSTALLATION_ID }}
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+
+      # ---------------------------
+      # Install Helm CLI
+      # ---------------------------
       - name: Install Helm
         run: |
           curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
 
-      - name: Install Chart Releaser
+      # ---------------------------
+      #  Set chart version + appVersion dynamically
+      # ---------------------------
+      - name: Package Helm chart with version overrides
         run: |
-          curl -sSL https://github.com/helm/chart-releaser/releases/download/v1.6.0/chart-releaser_1.6.0_linux_amd64.tar.gz \
-            | tar -xz -C /usr/local/bin cr
+          APP_VERSION="${{ github.event.inputs.version }}"
+          CHART_VERSION="${{ github.event.inputs.version }}"
 
-      - name: Package & Publish Helm charts
+          echo "Packaging chart with version=$CHART_VERSION appVersion=$APP_VERSION"
+
+          helm package charts/flask-app \
+            --app-version "$APP_VERSION" \
+            --version "$CHART_VERSION" \
+            -d packaged/
+
+      # ---------------------------
+      # Authenticate to GHCR using GitHub App token
+      # ---------------------------
+      - name: GHCR Login
         run: |
-          cr package charts/flask-app
-          cr upload \
-            --owner igorsilva-dev \
-            --repo helm-charts \
-            --release-name-template "{{ .Name }}-{{ github.event.inputs.version }}" \
-            --token ${{ secrets.GH_FLASK_APP }}
+          echo ${{ steps.app-token.outputs.token }} | \
+            helm registry login ghcr.io \
+              --username x-access-token \
+              --password-stdin
+
+      # ---------------------------
+      #  Push packaged chart to GHCR (OCI)
+      # ---------------------------
+      - name: Push Helm chart to GHCR
+        run: |
+          CHART="flask-app"
+          VERSION="${{ github.event.inputs.version }}"
           
-          cr index \
-            --owner igorsilva-dev \
-            --repo helm-charts \
-            --charts-repo https://igorsilva-dev.github.io/helm-charts \
-            --token ${{ secrets.GH_FLASK_APP }}
+          # Build OCI URL: ghcr.io/<OWNER>/<chart>
+          OCI_URL="ghcr.io/igorsilva-dev/${CHART}"
 
-        env:
-          CR_TOKEN: ${{ secrets.GH_FLASK_APP }}
+          echo "Pushing chart to $OCI_URL:$VERSION"
 
+          helm push packaged/${CHART}-${VERSION}.tgz "oci://${OCI_URL}"
