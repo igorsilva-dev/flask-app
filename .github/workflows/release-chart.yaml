@@ -88,7 +88,7 @@ jobs:
       # ---------------------------
       - name: GHCR Login
         run: |
-          echo "${{ steps.app_token.outputs.token }}" | \
+          echo "${{ secrets.GH_HELM_CHARTS }}" | \
             helm registry login ghcr.io \
               --username x-access-token \
               --password-stdin
