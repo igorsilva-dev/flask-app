@@ -13,39 +13,82 @@ jobs:
 
     steps:
       # ---------------------------
-      #  Authenticate as GitHub App
+      # Generate GitHub App JWT (Official)
       # ---------------------------
-      - name: Generate GitHub App Token
-        id: app-token
-        uses: tibdex/github-app-token@v2
+      - name: Generate JWT for GitHub App
+        id: generate_jwt
+        uses: actions/github-script@v7
+        env:
+          GH_APP_PRIVATE_KEY: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          GH_APP_ID: ${{ secrets.GH_APP_ID }}
         with:
-          app_id: ${{ secrets.GH_APP_ID }}
-          private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          installation_id: ${{ secrets.GH_APP_INSTALLATION_ID }}
+          script: |
+            const jwt = require('jsonwebtoken')
 
+            const privateKey = process.env.GH_APP_PRIVATE_KEY
+            const appId = process.env.GH_APP_ID
+
+            const token = jwt.sign(
+              {
+                iat: Math.floor(Date.now() / 1000) - 60,
+                exp: Math.floor(Date.now() / 1000) + (10 * 60),
+                iss: appId,
+              },
+              privateKey,
+              { algorithm: 'RS256' }
+            )
+
+            core.setOutput('jwt', token)
+
+      # ---------------------------
+      # Exchange JWT for Installation Access Token (Official)
+      # ---------------------------
+      - name: Get Installation Token
+        id: get_installation_token
+        uses: actions/github-script@v7
+        env:
+          GH_APP_INSTALLATION_ID: ${{ secrets.GH_APP_INSTALLATION_ID }}
+        with:
+          script: |
+            const jwt = '${{ steps.generate_jwt.outputs.jwt }}'
+            const installationId = process.env.GH_APP_INSTALLATION_ID
+
+            const res = await github.request(
+              "POST /app/installations/{installation_id}/access_tokens",
+              {
+                installation_id: installationId,
+                headers: { authorization: `Bearer ${jwt}` }
+              }
+            )
+
+            core.setOutput('token', res.data.token)
+
+      # ---------------------------
+      # Checkout repo with Installation Token
+      # ---------------------------
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          token: ${{ steps.app-token.outputs.token }}
+          token: ${{ steps.get_installation_token.outputs.token }}
 
       # ---------------------------
-      # Install Helm CLI
+      # Install Helm
       # ---------------------------
       - name: Install Helm
         run: |
           curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
 
       # ---------------------------
-      #  Update Helm dependencies
+      # Update Helm dependencies
       # ---------------------------
       - name: Update Helm dependencies
         run: |
           helm dependency update charts/flask-app
-      
+
       # ---------------------------
-      #  Set chart version + appVersion dynamically
+      # Package Helm chart
       # ---------------------------
-      - name: Package Helm chart with version overrides
+      - name: Package Helm chart
         run: |
           APP_VERSION="${{ github.event.inputs.version }}"
           CHART_VERSION="${{ github.event.inputs.version }}"
@@ -58,24 +101,23 @@ jobs:
             -d packaged/
 
       # ---------------------------
-      # Authenticate to GHCR using GitHub App token
+      # Login to GHCR using GitHub App token
       # ---------------------------
       - name: GHCR Login
         run: |
-          echo ${{ steps.app-token.outputs.token }} | \
+          echo "${{ steps.get_installation_token.outputs.token }}" | \
             helm registry login ghcr.io \
               --username x-access-token \
               --password-stdin
 
       # ---------------------------
-      #  Push packaged chart to GHCR (OCI)
+      # Push Helm Chart to GHCR (OCI)
       # ---------------------------
       - name: Push Helm chart to GHCR
         run: |
           CHART="flask-app"
           VERSION="${{ github.event.inputs.version }}"
-          
-          # Build OCI URL: ghcr.io/<OWNER>/<chart>
+
           OCI_URL="ghcr.io/igorsilva-dev/${CHART}"
 
           echo "Pushing chart to $OCI_URL:$VERSION"
