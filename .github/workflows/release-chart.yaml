@@ -13,43 +13,6 @@ jobs:
 
     steps:
       # ---------------------------
-      # Generate GitHub App JWT using OpenSSL
-      # ---------------------------
-      - name: Generate GitHub App JWT
-        id: jwt
-        run: |
-          header=$(echo -n '{"alg":"RS256","typ":"JWT"}' | openssl base64 -A | tr '+/' '-_' | tr -d '=')
-
-          now=$(date +%s)
-          iat=$((now - 60))
-          exp=$((now + 600))
-
-          payload=$(echo -n "{\"iat\":$iat,\"exp\":$exp,\"iss\":${{ secrets.GH_APP_ID }} }" \
-            | openssl base64 -A | tr '+/' '-_' | tr -d '=')
-
-          unsigned="${header}.${payload}"
-
-          signature=$(echo -n "$unsigned" \
-            | openssl dgst -sha256 -sign <(echo "${{ secrets.GH_APP_PRIVATE_KEY }}") \
-            | openssl base64 -A | tr '+/' '-_' | tr -d '=')
-
-          echo "token=${unsigned}.${signature}" >> $GITHUB_OUTPUT
-
-      # ---------------------------
-      # Exchange JWT for Installation Token
-      # ---------------------------
-      - name: Get Installation Token
-        id: app_token
-        run: |
-          token=$(curl -sX POST \
-            -H "Authorization: Bearer ${{ steps.jwt.outputs.token }}" \
-            -H "Accept: application/vnd.github+json" \
-            https://api.github.com/app/installations/${{ secrets.GH_APP_INSTALLATION_ID }}/access_tokens \
-            | jq -r '.token')
-
-          echo "token=$token" >> $GITHUB_OUTPUT
-
-      # ---------------------------
       # Checkout repo
       # ---------------------------
       - name: Checkout
